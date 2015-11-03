@@ -186,7 +186,7 @@ function HAi(ped::Pedigree)
     return (ii,jj,vv)
 end 
 
-function  mkPed(pedFile::String) 
+function  mkPed(pedFile::AbstractString) 
 	df = readtable(pedFile,eltypes=[UTF8String,UTF8String,UTF8String],separator = ' ',header=false)  
 	idMap = Dict()
 	aij = spzeros(1,1)
@@ -206,7 +206,7 @@ function  mkPed(pedFile::String)
 	return (ped)
 end
 
-function genoSet!(fileName::String,ped::Pedigree)
+function genoSet!(fileName::AbstractString,ped::Pedigree)
     df = readtable(fileName, eltypes=[UTF8String], separator = ' ',header=false)    
     for i in df[:,1]                   
         push!(ped.setG,i)              
