@@ -16,7 +16,7 @@ type Pedigree
     setNG::Set                            
     setG::Set
     setG_core::Set
-    setG_notcore::set
+    setG_notcore::Set
     counts                               
 end
 
