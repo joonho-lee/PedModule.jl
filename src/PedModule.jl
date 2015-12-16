@@ -14,7 +14,9 @@ type Pedigree
     idMap::Dict                               
     aij::SparseMatrixCSC{Float64,Int64}
     setNG::Set                            
-    setG::Set                             
+    setG::Set
+    setG_core::Set
+    setG_notcore::set
     counts                               
 end
 
@@ -191,9 +193,11 @@ function  mkPed(pedFile::AbstractString)
 	idMap = Dict()
 	aij = spzeros(1,1)
 	setNG = Set()
-    setG  = Set()
+    setG  = Set()    
+    setG_core = Set()
+    setG_notcore = Set()
     counts = zeros(2);
-    ped = Pedigree(1,idMap,aij,setNG,setG,counts)
+    ped = Pedigree(1,idMap,aij,setNG,setG,setG_core,setG_notcore,counts)
 	fillMap!(ped,df)
 	for id in keys(ped.idMap)
     	code!(ped,id)
@@ -206,8 +210,8 @@ function  mkPed(pedFile::AbstractString)
 	return (ped)
 end
 
-function genoSet!(fileName::AbstractString,ped::Pedigree)
-    df = readtable(fileName, eltypes=[UTF8String], separator = ' ',header=false)    
+function genoSet!(genoID_file::AbstractString,ped::Pedigree)
+    df = readtable(genoID_file, eltypes=[UTF8String], separator = ' ',header=false)  
     for i in df[:,1]                   
         push!(ped.setG,i)              
 	end
@@ -223,6 +227,43 @@ function genoSet!(fileName::AbstractString,ped::Pedigree)
 	end
 	numberGeno = j - 1
 	for i in ped.setG
+		ped.idMap[i].seqID = j
+		j += 1
+	end	
+	return (numberGeno)
+end	
+
+function genoSet!(genoID_file::AbstractString,genoCoreID_file::AbstractString,ped::Pedigree)
+    df1 = readtable(genoID_file, eltypes=[UTF8String], separator = ' ',header=false)  
+    for i in df1[:,1]                   
+        push!(ped.setG,i)              
+	end
+    
+    df2 = readtable(genoCoreID_file, eltypes=[UTF8String], separator = ' ',header=false)  
+    for i in df2[:,1]                   
+        push!(ped.setG_core,i)              
+	end
+       
+    all = Set()                        
+	for i in keys(ped.idMap)            
+        push!(all,i)                            
+	end
+    ped.setNG = setdiff(all,ped.setG)
+    ped.setG_notcore = setdiff(ped.setG,ped.setG_core)
+
+    j = 1
+	for i in ped.setNG
+		ped.idMap[i].seqID = j
+		j += 1
+	end
+	numberGeno = j - 1
+
+    for i in ped.setG_core
+		ped.idMap[i].seqID = j
+		j += 1
+	end	
+    
+    for i in ped.setG_notcore
 		ped.idMap[i].seqID = j
 		j += 1
 	end	
