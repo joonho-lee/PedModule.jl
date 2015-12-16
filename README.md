@@ -26,8 +26,12 @@ ped.idMap   ##Dict{Any,Any} with 3 entries:
 #calculate A inverse
 Ai = PedModule.AInverse(ped)
 
-##reorder A into 2 groups (specifically for single step methods)
-PedModule.genoSet!("genotyped.ID",ped)
+##reorder A into 2 groups (specifically for single step methods) in the order [others,genotype.ID]
+PedModule.genoSet!("genotype.ID",ped)
+ped.idMap
+
+##reorder A into 3 groups (specifically for single step methods) in the order [others,genotype_core.ID,genotype.ID-genotype_core.ID]
+PedModule.genoSet!("genotype.ID","genotype_core.ID",ped)
 ped.idMap
 ```
 
