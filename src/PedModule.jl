@@ -225,12 +225,12 @@ function genoSet!(genoID_file::AbstractString,ped::Pedigree)
 		ped.idMap[i].seqID = j
 		j += 1
 	end
-	numberGeno = j - 1
+	numberNonGeno = j - 1
 	for i in ped.setG
 		ped.idMap[i].seqID = j
 		j += 1
 	end	
-	return (numberGeno)
+	return (numberNonGeno)
 end	
 
 function genoSet!(genoID_file::AbstractString,genoCoreID_file::AbstractString,ped::Pedigree)
@@ -266,8 +266,11 @@ function genoSet!(genoID_file::AbstractString,genoCoreID_file::AbstractString,pe
     for i in ped.setG_notcore
 		ped.idMap[i].seqID = j
 		j += 1
-	end	
-	return (numberGeno)
+	end
+	
+	numberGeno = length(ped.setNG)
+	numberGenoCore = length(ped.setG_core)
+	return (numberGeno,numberGenoCore)
 end	
 
 function getIDs(ped::Pedigree)
