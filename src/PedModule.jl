@@ -233,6 +233,28 @@ function genoSet!(genoID_file::AbstractString,ped::Pedigree)
 	return (numberNonGeno)
 end	
 
+function genoSet!(genoID::Array{UTF8String,1},ped::Pedigree)
+    for i in genoID                   
+        push!(ped.setG,i)              
+    end
+    all = Set()                        
+	for i in keys(ped.idMap)            
+        push!(all,i)                            
+	end
+    ped.setNG = setdiff(all,ped.setG)   
+	j = 1
+	for i in ped.setNG
+		ped.idMap[i].seqID = j
+		j += 1
+	end
+	numberNonGeno = j - 1
+	for i in ped.setG
+		ped.idMap[i].seqID = j
+		j += 1
+	end	
+	return (numberNonGeno)
+end	
+
 function genoSet!(genoID_file::AbstractString,genoCoreID_file::AbstractString,ped::Pedigree)
     df1 = readtable(genoID_file, eltypes=[UTF8String], separator = ' ',header=false)  
     for i in df1[:,1]                   
