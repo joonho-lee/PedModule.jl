@@ -40,5 +40,5 @@ ped.idMap
 ####More
 
 * **homepage**: [QTL.rocks](http://QTL.rocks)
-* **Installation**: at the Julia REPL, `Pkg.clone("https://github.com/reworkhow/PedModule.jl.git")`
+* **Installation**: at the Julia REPL, `Pkg.clone("https://github.com/QTL-rocks/PedModule.jl.git")`
 * **Authors**: [Rohan Fernando](http://www.ans.iastate.edu/faculty/index.php?id=rohan), [Hao Cheng](http://reworkhow.github.io)
