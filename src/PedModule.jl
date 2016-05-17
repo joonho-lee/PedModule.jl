@@ -189,15 +189,18 @@ function HAi(ped::Pedigree)
 end 
 
 function  mkPed(pedFile::AbstractString) 
-	df = readtable(pedFile,eltypes=[UTF8String,UTF8String,UTF8String],separator = ' ',header=false)  
+	#df = readtable(pedFile,eltypes=[UTF8String,UTF8String,UTF8String],separator = ' ',header=false)  
+	#dataframes string conflits with AbstractString in julia
+	df = readtable(pedFile,separator = ' ',header=false)  
+
 	idMap = Dict()
 	aij = spzeros(1,1)
 	setNG = Set()
-    setG  = Set()    
-    setG_core = Set()
-    setG_notcore = Set()
-    counts = zeros(2);
-    ped = Pedigree(1,idMap,aij,setNG,setG,setG_core,setG_notcore,counts)
+        setG  = Set()    
+        setG_core = Set()
+        setG_notcore = Set()
+        counts = zeros(2);
+        ped = Pedigree(1,idMap,aij,setNG,setG,setG_core,setG_notcore,counts)
 	fillMap!(ped,df)
 	for id in keys(ped.idMap)
     	code!(ped,id)
