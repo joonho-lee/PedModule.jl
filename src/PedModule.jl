@@ -20,7 +20,7 @@ type Pedigree
     counts                               
 end
 
-function code!(ped::Pedigree,id::UTF8String) 
+function code!(ped::Pedigree,id::ASCIIString) 
 # The idea for this function came from a perl script by Bernt Guldbrandtsen  
     if ped.idMap[id].seqID!=0             
         return
