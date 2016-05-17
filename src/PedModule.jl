@@ -4,8 +4,8 @@ using DataFrames
 
 type PedNode
     seqID::Int64                                              
-    sire::UTF8String
-    dam::UTF8String
+    sire::ASCIIString
+    dam::ASCIIString
     f::Float64                           
 end
 
@@ -56,7 +56,7 @@ function fillMap!(ped::Pedigree,df)
     end 
 end
 
-function calcAddRel!(ped::Pedigree,id1::UTF8String,id2::UTF8String)
+function calcAddRel!(ped::Pedigree,id1::ASCIIString,id2::ASCIIString)
     #@printf "calcRel between %s and %s \n" id1 id2
     if id1=="0" || id2=="0"           # zero
         return 0.0
@@ -82,7 +82,7 @@ function calcAddRel!(ped::Pedigree,id1::UTF8String,id2::UTF8String)
     return(aij)
 end 
 
-function calcInbreeding!(ped::Pedigree,id::UTF8String)
+function calcInbreeding!(ped::Pedigree,id::ASCIIString)
     #@printf "calcInbreeding for: %s \n" id
     if ped.idMap[id].f > -1.0
         return ped.idMap[id].f
@@ -236,7 +236,7 @@ function genoSet!(genoID_file::AbstractString,ped::Pedigree)
 	return (numberNonGeno)
 end	
 
-function genoSet!(genoID::Array{UTF8String,1},ped::Pedigree)
+function genoSet!(genoID::Array{ASCIIString,1},ped::Pedigree)
     for i in genoID                   
         push!(ped.setG,i)              
     end
@@ -300,7 +300,7 @@ end
 
 function getIDs(ped::Pedigree)
 	n = length(ped.idMap)
-	ids = Array(UTF8String,n)
+	ids = Array(ASCIIString,n)
 	for i in ped.idMap
 		ids[i[2].seqID] = i[1]
 	end
