@@ -12,12 +12,12 @@ end
 type Pedigree
     currentID::Int64
     idMap::Dict #key: ID , value: PedNOde
-    aij::SparseMatrixCSC{Float64,Int64}
+    #aij::SparseMatrixCSC{Float64,Int64}
+    aij::Dict{Int64, Float64}
     setNG::Set
     setG::Set
     setG_core::Set
     setG_notcore::Set
-    counts
 end
 
 function code!(ped::Pedigree,id::AbstractString)
@@ -64,22 +64,32 @@ function calcAddRel!(ped::Pedigree,id1::AbstractString,id2::AbstractString)
     old,yng = ped.idMap[id1].seqID<ped.idMap[id2].seqID ? (id1,id2):(id2,id1)
     oldID = ped.idMap[old].seqID
     yngID = ped.idMap[yng].seqID
-    if ped.aij[oldID,yngID]>0.0      # already done
-    	ped.counts[2] += 1
-        return ped.aij[yngID,oldID]
-    end
-    ped.counts[1] += 1
-    if old==yng                       # aii
-        aii = 1.0 + calcInbreeding!(ped,old)
-        ped.aij[oldID,oldID] = aii
-        return (aii)
-    end
+    
+    n = yngID - 1
+    aijKey = n*(n+1)/2 + oldID 
+    if haskey(ped.aij,aijKey)     
+        return ped.aij[aijKey]
+    end       
+    
     sireOfYng = ped.idMap[yng].sire
     damOfYng  = ped.idMap[yng].dam
-    aij = 0.5*(calcAddRel!(ped,old,sireOfYng) + calcAddRel!(ped,old,damOfYng))
-    ped.aij[yngID,oldID] = aij
-    ped.aij[oldID,yngID] = 1.0
-    return(aij)
+    
+    if old==yng                       # aii
+        #aii = 1.0 + calcInbreeding!(ped,old)
+        aii = 1.0 + 0.5*calcAddRel!(ped,sireOfYng,damOfYng)
+        ped.aij[aijKey] = aii
+        return (aii)
+    end
+    
+    aOldDamYoung  = (old=="0" || damOfYng =="0")? 0.0:calcAddRel!(ped,old,damOfYng)
+    aOldSireYoung = (old=="0" || sireOfYng=="0")? 0.0:calcAddRel!(ped,old,sireOfYng)
+    aijVal = 0.5*(aOldSireYoung + aOldDamYoung)
+    ped.aij[aijKey] = aijVal
+
+    #aij = 0.5*(calcAddRel!(ped,old,sireOfYng) + calcAddRel!(ped,old,damOfYng))
+    #ped.aij[yngID,oldID] = aij
+    #ped.aij[oldID,yngID] = 1.0
+    return aijVal
 end
 
 function calcInbreeding!(ped::Pedigree,id::AbstractString)
@@ -188,28 +198,27 @@ function HAi(ped::Pedigree)
     return (ii,jj,vv)
 end
 
-function  mkPed(pedFile::AbstractString)
+function  mkPed(pedFile::AbstractString;header=false,separator=' ')
 
-	df = readtable(pedFile,eltypes=[UTF8String,UTF8String,UTF8String],separator = ' ',header=false)
+    df = readtable(pedFile,eltypes=[UTF8String,UTF8String,UTF8String],separator =separator,header=header)
 	#dataframes string conflits with AbstractString in julia(fixed)
 	#df = readtable(pedFile,separator = ' ',header=false)
 
 	idMap        = Dict()
-	aij          = spzeros(1,1)
+	aij          = aij = Dict{Int64, Float64}()
 	setNG        = Set()
   setG         = Set()
   setG_core    = Set()
   setG_notcore = Set()
 
-  counts       = zeros(2);
-  ped          = Pedigree(1,idMap,aij,setNG,setG,setG_core,setG_notcore,counts)
+  ped          = Pedigree(1,idMap,aij,setNG,setG,setG_core,setG_notcore)
 
 	fillMap!(ped,df)
 	for id in keys(ped.idMap)
     	code!(ped,id)
 	end
 	n = ped.currentID - 1
-	ped.aij = spzeros(n,n)
+	#ped.aij = spzeros(n,n)
 	for id in keys(ped.idMap)
     	calcInbreeding!(ped,id)
 	end
