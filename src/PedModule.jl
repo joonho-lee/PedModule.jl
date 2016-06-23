@@ -1,36 +1,36 @@
 module PedModule
 
-using DataFrames  
+using DataFrames
 
 type PedNode
-    seqID::Int64                                              
+    seqID::Int64
     sire::ASCIIString
     dam::ASCIIString
-    f::Float64                           
+    f::Float64
 end
 
-type Pedigree                             
-    currentID::Int64                            
-    idMap::Dict                               
+type Pedigree
+    currentID::Int64
+    idMap::Dict #key: ID , value: PedNOde
     aij::SparseMatrixCSC{Float64,Int64}
-    setNG::Set                            
+    setNG::Set
     setG::Set
     setG_core::Set
     setG_notcore::Set
-    counts                               
+    counts
 end
 
-function code!(ped::Pedigree,id::ASCIIString) 
-# The idea for this function came from a perl script by Bernt Guldbrandtsen  
-    if ped.idMap[id].seqID!=0             
+function code!(ped::Pedigree,id::AbstractString)
+# The idea for this function came from a perl script by Bernt Guldbrandtsen
+    if ped.idMap[id].seqID!=0
         return
     end
-    sireID = ped.idMap[id].sire  
+    sireID = ped.idMap[id].sire
     damID  = ped.idMap[id].dam
-    if sireID!="0" && ped.idMap[sireID].seqID==0       
-        code!(ped,sireID)                          
-    end 
-    if damID!="0" && ped.idMap[damID].seqID==0        
+    if sireID!="0" && ped.idMap[sireID].seqID==0
+        code!(ped,sireID)
+    end
+    if damID!="0" && ped.idMap[damID].seqID==0
         code!(ped,damID)
     end
     ped.idMap[id].seqID = ped.currentID
@@ -38,25 +38,25 @@ function code!(ped::Pedigree,id::ASCIIString)
 end
 
 function fillMap!(ped::Pedigree,df)
-    n = size(df,1)                     
-    for i in df[:,2]                       
+    n = size(df,1)
+    for i in df[:,2]
         if i!="0" && !haskey(ped.idMap,i)          # skip 0 and if already done
             ped.idMap[i]=PedNode(0,"0","0",-1.0)
         end
     end
-    for i in df[:,3]                      
+    for i in df[:,3]
         if i!="0" && !haskey(ped.idMap,i)         # make an entry for all dams
             ped.idMap[i]=PedNode(0,"0","0",-1.0)
         end
-    end 
+    end
     j=1
-    for i in df[:,1]                              
-        ped.idMap[i]=PedNode(0,df[j,2],df[j,3],-1.0) 
+    for i in df[:,1]
+        ped.idMap[i]=PedNode(0,df[j,2],df[j,3],-1.0)
         j+=1
-    end 
+    end
 end
 
-function calcAddRel!(ped::Pedigree,id1::ASCIIString,id2::ASCIIString)
+function calcAddRel!(ped::Pedigree,id1::AbstractString,id2::AbstractString)
     #@printf "calcRel between %s and %s \n" id1 id2
     if id1=="0" || id2=="0"           # zero
         return 0.0
@@ -72,17 +72,17 @@ function calcAddRel!(ped::Pedigree,id1::ASCIIString,id2::ASCIIString)
     if old==yng                       # aii
         aii = 1.0 + calcInbreeding!(ped,old)
         ped.aij[oldID,oldID] = aii
-        return (aii)   
+        return (aii)
     end
     sireOfYng = ped.idMap[yng].sire
-    damOfYng  = ped.idMap[yng].dam 
+    damOfYng  = ped.idMap[yng].dam
     aij = 0.5*(calcAddRel!(ped,old,sireOfYng) + calcAddRel!(ped,old,damOfYng))
     ped.aij[yngID,oldID] = aij
     ped.aij[oldID,yngID] = 1.0
     return(aij)
-end 
+end
 
-function calcInbreeding!(ped::Pedigree,id::ASCIIString)
+function calcInbreeding!(ped::Pedigree,id::AbstractString)
     #@printf "calcInbreeding for: %s \n" id
     if ped.idMap[id].f > -1.0
         return ped.idMap[id].f
@@ -118,11 +118,11 @@ function AInverse(ped::Pedigree)
         elseif pos[2]>0
             q[1] = 0.0
             q[2] = -0.5
-            d = 4.0/(3 - ped.idMap[dam].f) 
+            d = 4.0/(3 - ped.idMap[dam].f)
         else
             q[1] = 0.0
             q[2] = 0.0
-            d = 1.0 
+            d = 1.0
         end
         for i=1:3
             ii = pos[i]
@@ -137,7 +137,7 @@ function AInverse(ped::Pedigree)
         end
     end
     return (Ai)
-end 
+end
 
 function HAi(ped::Pedigree)
     ii = Int64[]
@@ -159,7 +159,7 @@ function HAi(ped::Pedigree)
             push!(vv,-0.5*d)
             push!(ii,myPos)
             push!(jj,myPos)
-            push!(vv,d)            
+            push!(vv,d)
          elseif sirePos>0
             d = sqrt(4.0/(3 - ped.idMap[sire].f))
             push!(ii,myPos)
@@ -177,126 +177,44 @@ function HAi(ped::Pedigree)
             push!(vv,-0.5*d)
             push!(ii,myPos)
             push!(jj,myPos)
-            push!(vv,d)            
+            push!(vv,d)
         else
             d = 1.0
             push!(ii,myPos)
             push!(jj,myPos)
-            push!(vv,d)                   
+            push!(vv,d)
         end
     end
     return (ii,jj,vv)
-end 
+end
 
-function  mkPed(pedFile::AbstractString) 
-	#df = readtable(pedFile,eltypes=[UTF8String,UTF8String,UTF8String],separator = ' ',header=false)  
-	#dataframes string conflits with AbstractString in julia
-	df = readtable(pedFile,separator = ' ',header=false)  
+function  mkPed(pedFile::AbstractString)
 
-	idMap = Dict()
-	aij = spzeros(1,1)
-	setNG = Set()
-        setG  = Set()    
-        setG_core = Set()
-        setG_notcore = Set()
-        counts = zeros(2);
-        ped = Pedigree(1,idMap,aij,setNG,setG,setG_core,setG_notcore,counts)
+	df = readtable(pedFile,eltypes=[UTF8String,UTF8String,UTF8String],separator = ' ',header=false)
+	#dataframes string conflits with AbstractString in julia(fixed)
+	#df = readtable(pedFile,separator = ' ',header=false)
+
+	idMap        = Dict()
+	aij          = spzeros(1,1)
+	setNG        = Set()
+  setG         = Set()
+  setG_core    = Set()
+  setG_notcore = Set()
+
+  counts       = zeros(2);
+  ped          = Pedigree(1,idMap,aij,setNG,setG,setG_core,setG_notcore,counts)
+
 	fillMap!(ped,df)
 	for id in keys(ped.idMap)
     	code!(ped,id)
 	end
 	n = ped.currentID - 1
-	ped.aij = spzeros(n,n)  
+	ped.aij = spzeros(n,n)
 	for id in keys(ped.idMap)
     	calcInbreeding!(ped,id)
-	end 
+	end
 	return (ped)
 end
-
-function genoSet!(genoID_file::AbstractString,ped::Pedigree)
-    df = readtable(genoID_file, eltypes=[UTF8String], separator = ' ',header=false)  
-    for i in df[:,1]                   
-        push!(ped.setG,i)              
-	end
-    all = Set()                        
-	for i in keys(ped.idMap)            
-        push!(all,i)                            
-	end
-    ped.setNG = setdiff(all,ped.setG)   
-	j = 1
-	for i in ped.setNG
-		ped.idMap[i].seqID = j
-		j += 1
-	end
-	numberNonGeno = j - 1
-	for i in ped.setG
-		ped.idMap[i].seqID = j
-		j += 1
-	end	
-	return (numberNonGeno)
-end	
-
-function genoSet!(genoID::Array{ASCIIString,1},ped::Pedigree)
-    for i in genoID                   
-        push!(ped.setG,i)              
-    end
-    all = Set()                        
-	for i in keys(ped.idMap)            
-        push!(all,i)                            
-	end
-    ped.setNG = setdiff(all,ped.setG)   
-	j = 1
-	for i in ped.setNG
-		ped.idMap[i].seqID = j
-		j += 1
-	end
-	numberNonGeno = j - 1
-	for i in ped.setG
-		ped.idMap[i].seqID = j
-		j += 1
-	end	
-	return (numberNonGeno)
-end	
-
-function genoSet!(genoID_file::AbstractString,genoCoreID_file::AbstractString,ped::Pedigree)
-    df1 = readtable(genoID_file, eltypes=[UTF8String], separator = ' ',header=false)  
-    for i in df1[:,1]                   
-        push!(ped.setG,i)              
-	end
-    
-    df2 = readtable(genoCoreID_file, eltypes=[UTF8String], separator = ' ',header=false)  
-    for i in df2[:,1]                   
-        push!(ped.setG_core,i)              
-	end
-       
-    all = Set()                        
-	for i in keys(ped.idMap)            
-        push!(all,i)                            
-	end
-    ped.setNG = setdiff(all,ped.setG)
-    ped.setG_notcore = setdiff(ped.setG,ped.setG_core)
-
-    j = 1
-	for i in ped.setNG
-		ped.idMap[i].seqID = j
-		j += 1
-	end
-	numberNonGeno = j - 1
-
-    for i in ped.setG_core
-		ped.idMap[i].seqID = j
-		j += 1
-	end	
-    
-    for i in ped.setG_notcore
-		ped.idMap[i].seqID = j
-		j += 1
-	end
-	
-	numberNonGeno = length(ped.setNG)
-	numberGenoCore = length(ped.setG_core)
-	return (numberNonGeno,numberGenoCore)
-end	
 
 function getIDs(ped::Pedigree)
 	n = length(ped.idMap)
@@ -305,6 +223,8 @@ function getIDs(ped::Pedigree)
 		ids[i[2].seqID] = i[1]
 	end
 	return (ids)
-end	
+end
+
+include("forSSBR.jl")
 
 end # of PedModule
