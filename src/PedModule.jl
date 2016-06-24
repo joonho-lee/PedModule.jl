@@ -199,23 +199,23 @@ function HAi(ped::Pedigree)
 end
 
 function  mkPed(pedFile::AbstractString;header=false,separator=' ')
-
-    df = readtable(pedFile,eltypes=[UTF8String,UTF8String,UTF8String],separator =separator,header=header)
     #dataframes string conflits with AbstractString in julia(fixed)
     #df = readtable(pedFile,separator = ' ',header=false)
 
-    ped          = Pedigree(1,Dict(),Dict{Int64, Float64}(),Set(),Set(),Set(),Set())
+    df  = readtable(pedFile,eltypes=[UTF8String,UTF8String,UTF8String],separator =separator,header=header)
+    ped = Pedigree(1,Dict(),Dict{Int64, Float64}(),Set(),Set(),Set(),Set())
 
     fillMap!(ped,df)
+    
     for id in keys(ped.idMap)
      code!(ped,id)
     end
-    n = ped.currentID - 1
-    #ped.aij = spzeros(n,n)
+    
     for id in keys(ped.idMap)
       calcInbreeding!(ped,id)
     end
-    return (ped)
+    
+    return ped
 end
 
 function getIDs(ped::Pedigree)
@@ -224,7 +224,7 @@ function getIDs(ped::Pedigree)
     for i in ped.idMap
       ids[i[2].seqID] = i[1]
     end
-    return (ids)
+    return ids
 end
 
 include("forSSBR.jl")
