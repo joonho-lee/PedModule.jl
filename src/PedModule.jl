@@ -11,8 +11,7 @@ end
 
 type Pedigree
     currentID::Int64
-    idMap::Dict #key: ID , value: PedNOde
-    #aij::SparseMatrixCSC{Float64,Int64}
+    idMap::Dict{AbstractString,PedNode}
     aij::Dict{Int64, Float64}
     setNG::Set
     setG::Set
@@ -146,7 +145,7 @@ function AInverse(ped::Pedigree)
             end
         end
     end
-    return (Ai)
+    return Ai
 end
 
 function HAi(ped::Pedigree)
@@ -202,8 +201,11 @@ function  mkPed(pedFile::AbstractString;header=false,separator=' ')
     #dataframes string conflits with AbstractString in julia(fixed)
     #df = readtable(pedFile,separator = ' ',header=false)
 
-    df  = readtable(pedFile,eltypes=[UTF8String,UTF8String,UTF8String],separator =separator,header=header)
-    ped = Pedigree(1,Dict(),Dict{Int64, Float64}(),Set(),Set(),Set(),Set())
+    df  = readtable(pedFile,eltypes=[UTF8String,UTF8String,UTF8String],
+                            separator=separator,header=header)
+    ped = Pedigree(1,Dict{AbstractString,PedNode}(),
+                     Dict{Int64, Float64}(),
+                     Set(),Set(),Set(),Set())
 
     fillMap!(ped,df)
     
