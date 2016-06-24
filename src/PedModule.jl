@@ -201,37 +201,30 @@ end
 function  mkPed(pedFile::AbstractString;header=false,separator=' ')
 
     df = readtable(pedFile,eltypes=[UTF8String,UTF8String,UTF8String],separator =separator,header=header)
-	#dataframes string conflits with AbstractString in julia(fixed)
-	#df = readtable(pedFile,separator = ' ',header=false)
+    #dataframes string conflits with AbstractString in julia(fixed)
+    #df = readtable(pedFile,separator = ' ',header=false)
 
-	idMap        = Dict()
-	aij          = aij = Dict{Int64, Float64}()
-	setNG        = Set()
-  setG         = Set()
-  setG_core    = Set()
-  setG_notcore = Set()
+    ped          = Pedigree(1,Dict(),Dict{Int64, Float64}(),Set(),Set(),Set(),Set())
 
-  ped          = Pedigree(1,idMap,aij,setNG,setG,setG_core,setG_notcore)
-
-	fillMap!(ped,df)
-	for id in keys(ped.idMap)
-    	code!(ped,id)
-	end
-	n = ped.currentID - 1
-	#ped.aij = spzeros(n,n)
-	for id in keys(ped.idMap)
-    	calcInbreeding!(ped,id)
-	end
-	return (ped)
+    fillMap!(ped,df)
+    for id in keys(ped.idMap)
+     code!(ped,id)
+    end
+    n = ped.currentID - 1
+    #ped.aij = spzeros(n,n)
+    for id in keys(ped.idMap)
+      calcInbreeding!(ped,id)
+    end
+    return (ped)
 end
 
 function getIDs(ped::Pedigree)
-	n = length(ped.idMap)
-	ids = Array(ASCIIString,n)
-	for i in ped.idMap
-		ids[i[2].seqID] = i[1]
-	end
-	return (ids)
+    n = length(ped.idMap)
+    ids = Array(ASCIIString,n)
+    for i in ped.idMap
+      ids[i[2].seqID] = i[1]
+    end
+    return (ids)
 end
 
 include("forSSBR.jl")
