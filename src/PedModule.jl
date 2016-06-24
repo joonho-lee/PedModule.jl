@@ -142,8 +142,6 @@ function HAi(ped::Pedigree)
             push!(jj,myPos)
             push!(vv,d)
           elseif damPos>0
-            q[1] = 0.0
-            q[2] = -0.5
             d = sqrt(4.0/(3 - ped.idMap[dam].f))
             push!(ii,myPos)
             push!(jj,damPos)
